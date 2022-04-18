@@ -89,3 +89,35 @@ export function securityPassword(password: string) {
 export async function activateCard(cardId: number, password: string, isBlocked: boolean) {
 	await cardRepository.update(cardId, { password, isBlocked })
 }
+
+export async function blockCard(cardId: number, password: string) {
+	const card = await cardRepository.findById(cardId)
+
+	if(card.isBlocked){
+		throw errors.conflict("Card already blocked")
+	}
+	
+	if(!bcrypt.compareSync(password, card.password)){
+		throw errors.unauthorized("Senha incorreta")
+	}
+
+	card.isBlocked = true
+
+	await cardRepository.update(cardId, card)
+}
+
+export async function unblockCard(cardId: number, password: string) {
+	const card = await cardRepository.findById(cardId)
+
+	if(!card.isBlocked){
+		throw errors.conflict("Card already unlocked")
+	}
+
+	if(!bcrypt.compareSync(password, card.password)){
+		throw errors.unauthorized("Incorrect password")
+	}
+
+	card.isBlocked = false
+
+	await cardRepository.update(cardId, card)
+}

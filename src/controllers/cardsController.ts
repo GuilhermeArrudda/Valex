@@ -3,6 +3,7 @@ import { cardExistence } from "../middlewares/cardExistenceMiddleware.js";
 import { employeeRegister } from "../middlewares/employeeCompanyMiddleware.js";
 import { expirationDate } from "../middlewares/expirationDate.js";
 import cardActivateSchema from "../schemas/activateSchema.js";
+import passwordSchema from "../schemas/passwordSchema.js";
 import * as cardsServices from "../services/cardsServices.js"
 import * as errors from "../utils/errors.js"
 
@@ -82,6 +83,44 @@ function validateCardType(cardType: string) {
 
 function validateActivateInput(body: any) {
 	const validation = cardActivateSchema.validate(body)
+
+	if(validation.error) {
+		throw errors.invalidInput("invalid data")
+	}
+}
+
+export async function blockCard (req: Request, res: Response) {
+	const { id: cardId } = req.params
+	const { password } = req.body
+
+	validatePassword(req.body)
+	
+	const card = await cardExistence(Number(cardId))
+
+	expirationDate(card.expirationDate)
+
+	await cardsServices.blockCard(Number(cardId), password)
+
+	res.sendStatus(200)
+}
+
+export async function unblockCard(req: Request, res: Response) {
+	const { id: cardId } = req.params
+	const { password } = req.body
+
+	validatePassword(req.body)
+
+	const card = await cardExistence(Number(cardId))
+
+	expirationDate(card.expirationDate)
+
+	await cardsServices.unblockCard(Number(cardId), password)
+
+	res.sendStatus(200)
+}
+
+function validatePassword(body: any) {
+	const validation = passwordSchema.validate(body)
 
 	if(validation.error) {
 		throw errors.invalidInput("invalid data")
