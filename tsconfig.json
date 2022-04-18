@@ -3,8 +3,7 @@
 			"esModuleInterop": true,
 			"module": "es6",
 			"moduleResolution": "node",
-			"outDir": "dist",
-			"allowSyntheticDefaultImports": true,
+			"outDir": "dist"
 	},
 	"ts-node": {
 			"esm": true
