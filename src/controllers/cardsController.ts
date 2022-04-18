@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
+import { cardExistence } from "../middlewares/cardExistenceMiddleware.js";
 import { employeeRegister } from "../middlewares/employeeCompanyMiddleware.js";
+import { expirationDate } from "../middlewares/expirationDate.js";
+import cardActivateSchema from "../schemas/activateSchema.js";
 import * as cardsServices from "../services/cardsServices.js"
 import * as errors from "../utils/errors.js"
 
@@ -33,6 +36,35 @@ export async function create(req:Request, res:Response) {
 		cardType
 	)
 
+	console.log({ cvv })
+
+	res.sendStatus(201)
+}
+
+export async function activate(req:Request, res:Response) {
+	const { cardId } = req.params
+	const { cvv, password } = req.body
+
+	validateActivateInput(req.body)
+
+	const card = await cardExistence(Number(cardId))
+
+	cardsServices.verifyCvv(cvv, card.securityCode)
+
+	cardsServices.verifyAlreadyAtivatedCard(card.password)
+
+	expirationDate(card.expirationDate)
+
+	const passwordHash = cardsServices.securityPassword(password)
+
+	const isBlocked = false
+	
+	await cardsServices.activateCard(
+		Number(cardId),
+		passwordHash,
+		isBlocked
+	)
+
 	res.sendStatus(201)
 }
 
@@ -45,5 +77,13 @@ function validateCardType(cardType: string) {
 		cardType !== "health"
 	) {
 		throw errors.invalidInput("Invalid type")
+	}
+}
+
+function validateActivateInput(body: any) {
+	const validation = cardActivateSchema.validate(body)
+
+	if(validation.error) {
+		throw errors.invalidInput("invalid data")
 	}
 }

@@ -67,3 +67,25 @@ export async function createCard(
 		type
 	})
 }
+
+export function verifyCvv(cvv: string, cvvHash: string) {
+	if(!bcrypt.compareSync(cvv, cvvHash)){
+		throw errors.unauthorized("CVV is not correct")
+	}
+}
+
+export function verifyAlreadyAtivatedCard(password: string) {
+	if (password !== null) {
+		throw errors.conflict("Card has already been activated")
+	}
+}
+
+export function securityPassword(password: string) {
+	const passwordHash = bcrypt.hashSync(password, 10)
+
+	return passwordHash
+}
+
+export async function activateCard(cardId: number, password: string, isBlocked: boolean) {
+	await cardRepository.update(cardId, { password, isBlocked })
+}
