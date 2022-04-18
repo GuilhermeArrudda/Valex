@@ -5,6 +5,7 @@ import { expirationDate } from "../middlewares/expirationDate.js"
 import rechargeSchema from "../schemas/rechargeSchema.js"
 import * as errors from "../utils/errors.js"
 import * as transactionsServices from "../services/transactionsService.js"
+import purchaseSchema from "../schemas/purchaseSchema.js"
 
 export async function transactions(req: Request, res: Response) {
 	const { cardId } = req.params
@@ -36,6 +37,37 @@ export async function recharge(req: Request, res: Response) {
 
 function validateRechargeAmount(body: any) {
 	const validation = rechargeSchema.validate(body)
+	if(validation.error) {
+		throw errors.invalidInput("Invalid data")
+	}
+}
+
+export async function purchase(req: Request, res: Response) {
+	const { cardId } = req.params
+	const { amount, businessId, password } = req.body
+
+	validatePurchase(req.body)
+
+	const card = await cardExistence(Number(cardId))
+
+	expirationDate(card.expirationDate)
+
+	await transactionsServices.verifyBalance(Number(cardId), amount)
+
+	const business = await transactionsServices.businessRegister(Number(businessId))
+
+	transactionsServices.businessType(card.type, business.type)
+
+	transactionsServices.verifyPassword(password, card.password)
+
+	transactionsServices.makePurchase(card.id, business.id, amount)
+
+	res.sendStatus(201)
+}
+
+function validatePurchase(body: any) {
+	const validation = purchaseSchema.validate(body)
+
 	if(validation.error) {
 		throw errors.invalidInput("Invalid data")
 	}

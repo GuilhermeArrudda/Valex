@@ -6,6 +6,6 @@ const transactionsRouter = Router()
 
 transactionsRouter.get("/transactions/:cardId/balance", transactionsController.transactions)
 transactionsRouter.post("/transactions/:cardId/recharge", validateApiKeyMiddleware, transactionsController.recharge)
-transactionsRouter.post("/transactions/:cardId/purchase", )
+transactionsRouter.post("/transactions/:cardId/purchase", transactionsController.purchase)
 
 export default transactionsRouter
